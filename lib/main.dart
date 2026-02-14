@@ -1,8 +1,25 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // TODO: Add your Firebase Web configuration here
+  // For Web, you need to provide options
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyB1q_juETj_iLKrawXmmH2F29hJiPG2-9k",
+      appId: "1:280623038074:web:98acb8a11fd714578605c3",
+      messagingSenderId: "280623038074",
+      projectId: "flutter-7a989",
+      authDomain: "flutter-7a989.firebaseapp.com",
+      storageBucket: "flutter-7a989.firebasestorage.app",
+    ),
+  );
+  
   runApp(const JustOneSecondApp());
 }
 
@@ -121,13 +138,29 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
         _consecutiveSuccess = 0;
         _message = 'FAILED... 💀';
         _messageColor = Colors.redAccent;
-
         if (_consecutiveFailure >= 3) {
           _isGameOver = true;
           _message = 'GAME OVER 👻';
         }
       }
     });
+
+    _logScore(result, isSuccess);
+  }
+
+  Future<void> _logScore(double score, bool isSuccess) async {
+    try {
+      await FirebaseFirestore.instance.collection('scores').add({
+        'score': score,
+        'isSuccess': isSuccess,
+        'timestamp': FieldValue.serverTimestamp(),
+        'consecutiveSuccess': _consecutiveSuccess,
+        'consecutiveFailure': _consecutiveFailure,
+      });
+      print('Score logged successfully');
+    } catch (e) {
+      print('Error logging score: $e');
+    }
   }
 
   void _resetGame() {
